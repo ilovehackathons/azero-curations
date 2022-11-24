@@ -1,10 +1,11 @@
 # AzeroCurations 
 
-
 azero.curations – Zero-Knowledge negative reputation (Hackathon)
-
+**ZK Decentralised posts for DAOs **
 
 ## Getting Started
+
+
 
 
 ## Development
@@ -12,7 +13,6 @@ azero.curations – Zero-Knowledge negative reputation (Hackathon)
 
 
 ## Deployment
-
 
 
 
