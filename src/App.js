@@ -1,7 +1,7 @@
 import logo from "./logo.svg";
 import "./App.css";
 import { web3Enable, web3Accounts } from "@polkadot/extension-dapp";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import DAO1 from "./DAO1.svg";
 import DAO2 from "./DAO2.svg";
@@ -19,11 +19,19 @@ function App() {
     const allInjected = await web3Enable("Azero Debate");
     setWalletState(allInjected.length ? "connected" : "errored");
     if (allInjected.length) {
-      setAccounts(await web3Accounts());
+      const accounts = await web3Accounts();
+      setAccounts(accounts);
+      setActiveAddress(accounts[0].address);
     }
   }
   const [walletState, setWalletState] = useState("awaiting connection");
   const [accounts, setAccounts] = useState([]);
+  const [activeAddress, setActiveAddress] = useState();
+
+  useEffect(() => {
+    console.log("Active address is now", activeAddress);
+  }, [activeAddress]);
+
   return (
     <div className="p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
@@ -45,7 +53,10 @@ function App() {
                 Wallet Connected
               </button>
             </div>
-            <select className="rounded-md border-2 border-teal-400 text-white w-40 bg-transparent">
+            <select
+              className="rounded-md border-2 border-teal-400 text-white w-40 bg-transparent"
+              onChange={(e) => setActiveAddress(e.target.value)}
+            >
               {accounts.map((account) => (
                 <option key={account.address}>{account.address}</option>
               ))}
@@ -212,7 +223,7 @@ function PostCard({
             </button>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4">{text}</div>
+        <div className="bg-black text-white rounded-xl p-4">{text}</div>
       </div>
     </div>
   );
