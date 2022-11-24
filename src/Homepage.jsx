@@ -46,10 +46,16 @@ function Homepage() {
         />
       </div>
       <div className="flex gap-4 justify-center">
-        <button className="bg-teal-400 text-black text-4xl uppercase px-16 py-4 rounded-xl">
+        <button
+          className="bg-teal-400 text-black text-4xl uppercase px-16 py-4 rounded-xl"
+          onClick={() => (window.location.pathname = "app")}
+        >
           Join
         </button>
-        <button className="bg-teal-400 text-black text-4xl uppercase px-16 py-4 rounded-xl">
+        <button
+          className="bg-teal-400 text-black text-4xl uppercase px-16 py-4 rounded-xl"
+          onClick={() => (window.location.pathname = "app")}
+        >
           Create
         </button>
       </div>
