@@ -1,10 +1,8 @@
+# AzeroCurations 
 
 
+azero.curations – Zero-Knowledge negative reputation (Hackathon)
 
-# AzeroDebate 
-
-
-azero.debate – Zero-Knowledge negative reputation (Hackathon)
 
 ## Getting Started
 
