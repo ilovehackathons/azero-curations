@@ -1,4 +1,6 @@
-# AzeroCurations 
+# AzeroCurations
+
+The `master` branch only contains the backend code. Check the `main` branch for the full code. The frontend is deployed to https://azero-curations.vercel.app/
 
 azero.curations – Zero-Knowledge negative reputation (Hackathon)
 **ZK Decentralised posts for DAOs
