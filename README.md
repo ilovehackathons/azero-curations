@@ -40,11 +40,10 @@ Compiles the contract into optimized WebAssembly bytecode, generates metadata fo
 ### How we built it
   
   We have used rust for smart contracts. 
-  
-  
-  
+
 #### Frontend
 
-  
-  
-
+- The project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+- [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) was added for styling.
+- We use [@polkadot/extension-dapp](https://polkadot.js.org/docs/extension/usage) to connect with the [polkadot{.js} extension](https://github.com/polkadot-js/extension).
+- The screens were [designed in Figma](https://www.figma.com/file/MUhnEtOwSwOK0ztr6MM7UZ/) before being implemented.
