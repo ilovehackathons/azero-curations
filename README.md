@@ -8,7 +8,7 @@ azero.curations – Zero-Knowledge negative reputation (Hackathon)
 ## Getting Started
 
 
-
+Check https://paritytech.github.io/ink/ for the commands relative to smart contracts 
 
 ## Development
 
