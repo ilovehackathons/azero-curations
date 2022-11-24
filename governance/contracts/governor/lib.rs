@@ -5,9 +5,10 @@ use ink_env::{AccountId, Environment};
 use ink_lang as ink;
 use ink_prelude::vec::Vec;
 
+
 use roosterdao::traits::governor::{
-    CollectionId,
     NftId,
+    CollectionId,
     ResourceId,
     //RCErrorCode,
     //RCError,
@@ -26,6 +27,7 @@ pub enum RCErrorCode {
 pub enum RCError {
     ErrorCode(RCErrorCode),
 }
+
 
 #[ink::chain_extension]
 pub trait RmrkExt {
@@ -106,19 +108,30 @@ impl Environment for CustomEnvironment {
 
 #[openbrush::contract(env = crate::CustomEnvironment)]
 pub mod governor {
+    use ink_storage::traits::SpreadAllocate;
     use ink_prelude::vec;
     use ink_prelude::vec::Vec;
-    use ink_storage::traits::SpreadAllocate;
 
-    use super::{CollectionId, NftId, RCError, RCErrorCode};
-
-    use ink_prelude::string::String;
+    use super::{
+        RCError, 
+        RCErrorCode,
+        CollectionId,
+        NftId,
+    };
+    
+    use ink_prelude::string::{
+        String,
+    };
 
     use ink_env::hash::Blake2x256;
-
-    use openbrush::{contracts::timelock_controller::*, storage::Mapping};
-
+    
+    use openbrush::{
+        storage::Mapping,
+        contracts::timelock_controller::*,
+    };
+    
     use roosterdao::traits::governor::*;
+
 
     #[ink(event)]
     pub struct ProposalCreated {
@@ -160,11 +173,11 @@ pub mod governor {
     pub struct CollectionCreated {
         #[ink(topic)]
         collection_id: CollectionId,
-        symbol: String,
+        symbol: String,        
     }
 
     #[ink(storage)]
-    #[derive(Default, SpreadAllocate, TimelockControllerStorage)]
+    #[derive(Default,SpreadAllocate,TimelockControllerStorage)]
     pub struct Governor {
         #[TimelockControllerStorageField]
         timelock: TimelockControllerData,
@@ -186,6 +199,7 @@ pub mod governor {
         delegation_blocks: Vec<BlockNumber>,
     }
 
+
     impl Governor {
         #[ink(constructor, payable)]
         pub fn new(
@@ -205,110 +219,137 @@ pub mod governor {
                 let calee_vec = vec![callee];
 
                 instance.price = nft_price;
-
+                
                 // `TimelockController` and `AccessControl` have `_init_with_admin` methods.
                 // You need to call it for each trait separately, to initialize everything for these traits.
                 AccessControlInternal::_init_with_admin(instance, caller);
-                TimelockControllerInternal::_init_with_admin(
-                    instance,
-                    caller,
-                    execution_delay,
-                    calee_vec.clone(),
-                    calee_vec,
-                );
+                TimelockControllerInternal::_init_with_admin(instance, caller, execution_delay, calee_vec.clone(), calee_vec);
+
+                
             })
         }
 
         //////////////////////////////
         /// Governor internal
-        ///
+        /// 
 
         fn _emit_proposal_created(
-            &self,
-            proposal_id: OperationId,
+            &self, 
+            proposal_id : OperationId,
             proposer: AccountId,
             transaction: Transaction,
             description: String,
             vote_start: Timestamp,
             vote_end: Timestamp,
         ) {
-            self.env().emit_event(ProposalCreated {
+            self.env()
+            .emit_event(ProposalCreated { 
                 proposal_id,
                 proposer,
                 transaction,
                 description,
                 vote_start,
                 vote_end,
+             })
+        }
+
+        fn _emit_vote_cast(
+            &self,
+            voter: AccountId,
+            proposal_id: OperationId,
+            vote: VoteType,
+        ) {
+            self.env()
+            .emit_event( VoteCast {
+                voter,
+                proposal_id,
+                vote
             })
         }
 
-        fn _emit_vote_cast(&self, voter: AccountId, proposal_id: OperationId, vote: VoteType) {
-            self.env().emit_event(VoteCast {
-                voter,
-                proposal_id,
-                vote,
-            })
-        }
 
         fn _emit_delegate_changed(
             &self,
             delegator: AccountId,
             to_delegate: AccountId,
             from_delegate: AccountId,
-        ) {
-            self.env().emit_event(DelegateChanged {
-                delegator,
-                from_delegate,
-                to_delegate,
-            })
+        ) {            
+            self.env()
+            .emit_event (
+                DelegateChanged {
+                    delegator,
+                    from_delegate,
+                    to_delegate,
+                })
         }
 
-        fn _emit_delegate_votes_changed(&self, delegate: AccountId) {
+        fn _emit_delegate_votes_changed(
+            &self,
+            delegate: AccountId
+        ) {
+
             let votes = self._get_votes(delegate, None);
 
             self.env()
-                .emit_event(DelegateVotesChanged { delegate, votes })
+            .emit_event (
+                DelegateVotesChanged {
+                    delegate,
+                    votes
+                })
+
         }
 
-        fn _emit_collection_created(&self, collection_id: CollectionId, symbol: String) {
-            self.env().emit_event(CollectionCreated {
-                collection_id,
-                symbol,
-            })
+        fn _emit_collection_created(
+            &self,
+            collection_id: CollectionId,
+            symbol: String,
+        ) {
+            self.env()
+            .emit_event (
+                CollectionCreated {
+                    collection_id,
+                    symbol,
+                })
         }
+
 
         fn _get_delegate(&self, delegator: AccountId) -> AccountId {
+        
             for block in self.delegation_blocks.iter().rev() {
                 let (cur_delegator, cur_delegate) = self.delegations.get(&block).unwrap();
-                if cur_delegator == delegator {
-                    return cur_delegate;
+                    if cur_delegator == delegator {
+                        return cur_delegate
+                    }
                 }
-            }
-
+            
             return AccountId::default();
+
         }
 
-        fn _hash_proposal(
-            &self,
-            transaction: Transaction,
-            description_hash: [u8; 32],
-        ) -> OperationId {
-            TimelockController::hash_operation(self, transaction, None, description_hash)
+
+        fn _hash_proposal(&self, transaction: Transaction, description_hash: [u8; 32]) -> OperationId {
+            TimelockController::hash_operation(self, transaction,None, description_hash)
         }
 
         fn _hash_description(&self, description: String) -> [u8; 32] {
             self.env().hash_bytes::<Blake2x256>(description.as_bytes())
+            
         }
 
+
         /// Verifies account owns required NFT
-        ///
+        /// 
         /// # Errors
-        ///
-        ///
-        ///    `NotOwner` if not
-        fn _has_required_nft(&self, caller: AccountId) -> Result<(), GovernorError> {
+        /// 
+        /// 
+        ///    `NotOwner` if not 
+        fn _has_required_nft(
+            &self, 
+            caller: AccountId
+        ) -> Result<(),GovernorError> {
+            
             if !self.owners_nft.contains(&caller) {
-                return Err(GovernorError::NotOwner);
+               return Err(GovernorError::NotOwner)    
             }
 
             Ok(())
@@ -317,11 +358,11 @@ pub mod governor {
         fn _get_votes(&self, account: AccountId, blocknumber_o: Option<BlockNumber>) -> u32 {
             let block_limit = match blocknumber_o {
                 None => self.env().block_number(),
-                Some(bn) => bn,
+                Some(bn) => bn
             };
 
-            let mut result: u32 = 0;
-            let mut already_seen: Vec<AccountId> = Vec::new();
+            let mut result : u32 = 0;
+            let mut already_seen : Vec<AccountId> = Vec::new(); 
             for block in self.delegation_blocks.iter().rev() {
                 if block > &block_limit {
                     continue;
@@ -335,13 +376,8 @@ pub mod governor {
                     }
                 }
             }
-
-            ink_env::debug_println!(
-                "_get_votes: blocknumber={:?} account={:?} result={:?}",
-                block_limit,
-                account,
-                result
-            );
+            
+            ink_env::debug_println!("_get_votes: blocknumber={:?} account={:?} result={:?}", block_limit, account, result);
             result
         }
 
@@ -350,73 +386,78 @@ pub mod governor {
         /// # Errors
         ///
         ///     Returns with `InsufficientVotingPower` if voting power is not available
-        fn _has_voting_power(&self, caller: AccountId) -> Result<(), GovernorError> {
-            let voting_power = self._get_votes(caller, None);
-            if voting_power < 1 {
-                Err(GovernorError::InsufficientVotingPower)
-            } else {
-                Ok(())
-            }
+        fn _has_voting_power(&self, caller: AccountId) -> Result<(),GovernorError> {
+           let voting_power = self._get_votes(caller, None);
+           if voting_power < 1 {
+               Err(GovernorError::InsufficientVotingPower)
+           }  else {
+            Ok(())
+           }
         }
 
+       
+
+
         fn _cast_vote(
-            &mut self,
-            proposal_id: OperationId,
-            vote: VoteType,
-        ) -> Result<(), GovernorError> {
+            &mut self, 
+            proposal_id: OperationId, 
+            vote: VoteType, 
+        )  -> Result<(),GovernorError> {
             let caller = self.env().caller();
             self._has_voting_power(caller)?;
 
             if !self.proposals.contains(&proposal_id) {
-                return Err(GovernorError::ProposalDoesNotExist);
+                return Err(GovernorError::ProposalDoesNotExist)
             }
 
             if self.state(proposal_id) != ProposalState::Active {
-                return Err(GovernorError::NotOpenForVoting);
+                return Err(GovernorError::NotOpenForVoting)
             }
 
             let mut vote_status = self.votes.get(&proposal_id).unwrap();
-
+            
+            
             if vote_status.has_voted.contains(&caller) {
-                return Err(GovernorError::HasAlreadyVoted);
+                return Err(GovernorError::HasAlreadyVoted)
             }
 
             let voting_power = self._get_votes(caller, None);
             match vote {
                 VoteType::Against => vote_status.votes_against += voting_power,
-                VoteType::For => vote_status.votes_for += voting_power,
+                VoteType::For     => vote_status.votes_for     += voting_power,
                 VoteType::Abstain => vote_status.votes_abstain += voting_power,
             };
 
             vote_status.has_voted.push(caller);
             self.votes.insert(&proposal_id, &vote_status);
-            ink_env::debug_println!(
-                "_cast_vote: caller={:?} vote_status={:?}",
-                caller,
-                vote_status
-            );
+            ink_env::debug_println!("_cast_vote: caller={:?} vote_status={:?}", caller, vote_status);
 
-            self._emit_vote_cast(caller, proposal_id, vote);
+            self._emit_vote_cast(caller,proposal_id,vote);
 
             self._evolve_from_delegate(caller)?;
 
             Ok(())
+            
         }
 
-        fn _execute(&self, proposal_id: OperationId) -> Result<(), GovernorError> {
+        fn _execute(
+            &self, 
+            proposal_id: OperationId
+        ) -> Result<(), GovernorError> {
             //does the proposal exist?
             if !self.proposals.contains(&proposal_id) {
-                return Err(GovernorError::ProposalDoesNotExist);
+                return Err(GovernorError::ProposalDoesNotExist)
             }
 
             if self.state(proposal_id) != ProposalState::Succeeded {
-                return Err(GovernorError::VoteHasNotSucceeded);
+                return Err(GovernorError::VoteHasNotSucceeded)
             }
 
             //TODO: finish this....
             Ok(())
         }
 
+        
         fn _create_collection_metadata(
             &mut self,
             metadata: String,
@@ -447,15 +488,17 @@ pub mod governor {
             Ok(())
         }
 
+
         fn _create_collection(&mut self) -> Result<(), RCError> {
-            let metadata = "ipfs://ipfs/QmTG9ekqrdMh3dsehLYjC19fUSmPR31Ds2h6Jd7LnMZ9c7";
+              
+              let metadata = "ipfs://ipfs/QmTG9ekqrdMh3dsehLYjC19fUSmPR31Ds2h6Jd7LnMZ9c7";
 
-            let symbol = "ROO";
+              let symbol = "ROO";
 
-            self._create_collection_metadata(metadata.into(), symbol.into())
+              self._create_collection_metadata(metadata.into(), symbol.into())
         }
 
-        fn _evolve_owner(&mut self, account: AccountId) -> Result<(), GovernorError> {
+        fn _evolve_owner(&mut self, account: AccountId) -> Result<(),GovernorError> {
             let cur_lvl = self.owners_lvl.get(&account).unwrap();
             let nft_id = self.owners_nft.get(&account).unwrap();
 
@@ -471,7 +514,7 @@ pub mod governor {
                     self.env().account_id(),
                     self.collection_id.unwrap(),
                     nft_id,
-                    cur_lvl,
+                    cur_lvl
                 );
             }
 
@@ -487,10 +530,11 @@ pub mod governor {
             Ok(())
         }
 
-        fn _evolve_from_delegate(&mut self, delegate: AccountId) -> Result<(), GovernorError> {
+
+        fn _evolve_from_delegate(&mut self, delegate: AccountId) -> Result<(),GovernorError> {
             // evolve every owner that delegated to delegate
-            let mut already_seen: Vec<AccountId> = Vec::new();
-            let mut to_evolve: Vec<AccountId> = Vec::new();
+            let mut already_seen : Vec<AccountId> = Vec::new(); 
+            let mut to_evolve: Vec<AccountId> = Vec::new(); 
             for block in self.delegation_blocks.iter().rev() {
                 let (cur_delegator, cur_delegate) = self.delegations.get(&block).unwrap();
                 if !already_seen.contains(&cur_delegator) {
@@ -507,12 +551,13 @@ pub mod governor {
 
             Ok(())
         }
+       
 
         //////////////////////////////
         /// Governor read functions
-        ///
-
-        /// returns whether account has voted for proposal_id
+        /// 
+        
+        /// returns whether account has voted for proposal_id 
         #[ink(message)]
         pub fn has_voted(&self, proposal_id: OperationId, account: AccountId) -> bool {
             if !self.votes.contains(&proposal_id) {
@@ -531,74 +576,61 @@ pub mod governor {
 
         #[ink(message)]
         pub fn proposal_deadline(&self, proposal_id: OperationId) -> Timestamp {
-            assert!(
-                self.proposals.contains(&proposal_id),
-                "Proposal does noet exist"
-            );
-
+            assert!(self.proposals.contains(&proposal_id), "Proposal does noet exist");
+            
             let proposal = self.proposals.get(&proposal_id).unwrap();
 
             proposal.vote_end
+
         }
 
-        #[ink(message)]
+        #[ink(message)]        
         pub fn proposal_snapshot(&self, proposal_id: OperationId) -> Timestamp {
-            assert!(
-                self.proposals.contains(&proposal_id),
-                "Proposal does noet exist"
-            );
-
+            assert!(self.proposals.contains(&proposal_id), "Proposal does noet exist");
+            
             let proposal = self.proposals.get(&proposal_id).unwrap();
 
             proposal.vote_start
+
         }
 
         #[ink(message)]
-        pub fn proposal_votes(&self, proposal_id: OperationId) -> (u32, u32, u32) {
-            assert!(
-                self.votes.contains(&proposal_id),
-                "Proposal does noet exist"
-            );
-
+        pub fn proposal_votes(&self, proposal_id: OperationId) -> (u32,u32,u32) {
+            assert!(self.votes.contains(&proposal_id), "Proposal does noet exist");
+            
             let proposal = self.votes.get(&proposal_id).unwrap();
 
-            (
-                proposal.votes_against,
-                proposal.votes_for,
-                proposal.votes_abstain,
-            )
+            (proposal.votes_against, proposal.votes_for, proposal.votes_abstain)
+
         }
 
         #[ink(message)]
         pub fn state(&self, proposal_id: OperationId) -> ProposalState {
-            assert!(
-                self.proposals.contains(&proposal_id),
-                "Proposal does noet exist"
-            );
+            assert!(self.proposals.contains(&proposal_id), "Proposal does noet exist");
             let proposal = self.proposals.get(&proposal_id).unwrap();
 
             if proposal.executed {
-                return ProposalState::Executed;
+                return ProposalState::Executed
             }
 
             if proposal.canceled {
-                return ProposalState::Canceled;
+                return ProposalState::Canceled
             }
 
             if proposal.vote_start > self.env().block_timestamp() {
-                return ProposalState::Pending;
+                return ProposalState::Pending
             }
 
             if proposal.vote_end > self.env().block_timestamp() {
-                return ProposalState::Active;
+                return ProposalState::Active
             }
 
             let vote = self.votes.get(&proposal_id).unwrap();
             if vote.votes_for > vote.votes_against {
-                return ProposalState::Succeeded;
+                return ProposalState::Succeeded
             }
-
-            return ProposalState::Defeated;
+            
+            return ProposalState::Defeated
         }
 
         #[ink(message)]
@@ -619,8 +651,9 @@ pub mod governor {
             self._hash_proposal(transaction, description_hash)
         }
 
+        
         /// ERC721Votes read functions
-        #[ink(message)]
+        #[ink(message)] 
         pub fn get_past_votes(&self, account: AccountId, block: BlockNumber) -> u32 {
             self._get_votes(account, Some(block))
         }
@@ -636,32 +669,32 @@ pub mod governor {
         }
 
         #[ink(message)]
-        pub fn get_nft(&self, account: AccountId) -> Result<(CollectionId, NftId), GovernorError> {
+        pub fn get_nft(&self, account: AccountId) -> Result<(CollectionId, NftId), GovernorError>  {
             if !self.owners_nft.contains(&account) {
-                return Err(GovernorError::NotOwner);
-            }
+                return Err(GovernorError::NotOwner)    
+             }
 
-            let nft_id = self.owners_nft.get(&account).unwrap();
-            Ok((self.collection_id.unwrap(), nft_id))
+             let nft_id = self.owners_nft.get(&account).unwrap();
+             Ok((self.collection_id.unwrap(),nft_id))
         }
 
         #[ink(message)]
-        pub fn list_owners(&self) -> Vec<(AccountId, NftId, u32)> {
-            let mut result: Vec<(AccountId, NftId, u32)> = Vec::new();
+        pub fn list_owners(&self) -> Vec<(AccountId,NftId,u32)> {
+            let mut result : Vec<(AccountId,NftId,u32)> = Vec::new();
 
             for owner in self.owners.iter() {
                 let nft_id = self.owners_nft.get(owner).unwrap();
                 let votes = self._get_votes(*owner, None);
 
-                result.push((*owner, nft_id, votes));
+                result.push((*owner,nft_id,votes));
             }
 
             result
         }
 
         #[ink(message)]
-        pub fn list_proposals(&self) -> Vec<(OperationId, ProposalVote)> {
-            let mut result: Vec<(OperationId, ProposalVote)> = Vec::new();
+        pub fn list_proposals(&self) -> Vec<(OperationId,ProposalVote)> {
+            let mut result: Vec<(OperationId,ProposalVote)> = Vec::new();
 
             for proposal in self.proposal_ids.iter() {
                 let proposal_vote = self.votes.get(proposal).unwrap();
@@ -673,18 +706,20 @@ pub mod governor {
 
         //////////////////////////////
         /// Governor write functions
-        ///
+        /// 
         #[ink(message)]
         pub fn create_collection(&mut self) -> Result<(), RCError> {
             self._create_collection()
         }
 
+
+
         #[ink(message)]
         pub fn cast_vote(
-            &mut self,
+            &mut self, 
             proposal_id: OperationId,
             vote: VoteType,
-        ) -> Result<(), GovernorError> {
+        ) -> Result<(),GovernorError> {
             self._cast_vote(proposal_id, vote)
         }
 
@@ -695,33 +730,31 @@ pub mod governor {
 
         #[ink(message)]
         pub fn propose(
-            &mut self,
-            transaction: Transaction,
-            description: String,
-        ) -> Result<OperationId, GovernorError> {
+            &mut self, 
+            transaction: Transaction, 
+            description: String
+        ) -> Result<OperationId, GovernorError>  {
+
             let caller = self.env().caller();
             self._has_required_nft(caller)?;
 
-            ink_env::debug_println!(
-                "propose(caller={:?}, Transaction={:?}, description={:?})",
-                caller,
-                transaction,
-                description
-            );
 
+            ink_env::debug_println!("propose(caller={:?}, Transaction={:?}, description={:?})",caller,transaction,description);
+            
             let description_hash = self._hash_description(description.clone());
             let proposal_id = self._hash_proposal(transaction.clone(), description_hash);
 
             // is this a new proposal
             if self.proposals.contains(&proposal_id) {
-                return Err(GovernorError::ProposalAlreadyExists);
+                return Err(GovernorError::ProposalAlreadyExists)
             }
+
 
             let proposal = ProposalCore {
                 vote_start: self.env().block_timestamp() + self.voting_delay,
                 vote_end: self.env().block_timestamp() + self.voting_delay + self.voting_period,
                 executed: false,
-                canceled: false,
+                canceled: false
             };
 
             self.proposals.insert(&proposal_id, &proposal);
@@ -729,78 +762,88 @@ pub mod governor {
 
             self.proposal_ids.push(proposal_id);
 
-            self._emit_proposal_created(
+            self
+            ._emit_proposal_created(
                 proposal_id,
                 self.env().caller(),
                 transaction,
                 description,
                 proposal.vote_start,
-                proposal.vote_end,
+                proposal.vote_end
             );
 
             Ok(proposal_id)
         }
 
         #[ink(message)]
-        pub fn delegate(&mut self, delegate: AccountId) -> Result<(), GovernorError> {
+        pub fn delegate(
+            &mut self,
+            delegate: AccountId,
+        ) -> Result<(),GovernorError> {
+
             let caller = self.env().caller();
             self._has_required_nft(caller)?;
 
             let old_delegate = self._get_delegate(caller);
 
             let current_block = self.env().block_number();
-            self.delegations.insert(&current_block, &(caller, delegate));
+            self.delegations.insert(&current_block, &(caller,delegate));
 
             if !self.delegation_blocks.contains(&current_block) {
                 self.delegation_blocks.push(current_block);
             }
-
+        
             self._emit_delegate_changed(caller, delegate, old_delegate);
             self._emit_delegate_votes_changed(old_delegate);
             self._emit_delegate_votes_changed(delegate);
 
-            Ok(())
+           Ok(())
         }
 
         //////////////////////////////
         /// Governor payable functions
-        ///
+        /// 
 
-        #[ink(message, payable)]
-        pub fn become_member(&mut self) -> Result<(), GovernorError> {
+        #[ink(message,payable)]
+        pub fn become_member(
+            &mut self
+         ) -> Result<(),GovernorError> {
             let caller = self.env().caller();
             let contract_address = self.env().account_id();
 
             if self.env().transferred_value() < self.price {
-                return Err(GovernorError::InsufficientAmount);
+                return Err(GovernorError::InsufficientAmount)
             }
 
             if self.owners_nft.contains(&caller) {
-                return Err(GovernorError::AlreadyOwner);
+                return Err(GovernorError::AlreadyOwner)
             }
 
             let metadata = "ipfs://ipfs/QmeeCx81m6RVjmzbHjdeHABa7ksVPymwvXRWSuXSnvpoYG";
 
-            let mint_result = self.env().extension().mint_nft(
+
+            let mint_result = self.env().extension()
+            .mint_nft(
                 contract_address,
                 caller,
                 self.collection_id.unwrap(),
-                metadata.into(),
+                metadata.into()
             );
 
             let nft_id = match mint_result {
                 Ok(nft_id) => nft_id,
-                _ => return Err(GovernorError::MintFailed),
+                _ => return Err(GovernorError::MintFailed)
             };
 
             self.owners.push(caller);
             self.owners_nft.insert(&caller, &nft_id.unwrap());
-            self.owners_lvl.insert(&caller, &1);
+            self.owners_lvl.insert(&caller,&1);
 
             self._evolve_owner(caller)?;
 
             Ok(())
-        }
+         }
+        
     }
 
     mod tests {
@@ -808,45 +851,54 @@ pub mod governor {
 
         #[allow(unused_imports)]
         #[cfg(feature = "std")]
-        use openbrush::test_utils::{accounts, change_caller};
+        use openbrush::test_utils::{
+            change_caller,
+            accounts
+        };
 
         #[allow(unused_imports)]
         use crate::governor::{
-            AccountId, Governor, GovernorError, OperationId, ProposalState, Timestamp, Transaction,
+            ProposalState,
+            Governor,
+            Transaction,
+            OperationId,
+            Timestamp,
+            AccountId,
             VoteType,
-        };
+            GovernorError,
+        };        
+    
 
         #[ink::test]
         fn default_works() {
-            let governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
             assert_eq!(governor.name(), Some(String::from("Governor")));
         }
+
 
         #[ink::test]
         fn get_votes_works() {
             let accounts = accounts();
             change_caller(accounts.bob);
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
             //let block_number = ink_env::block_number::<ink_env::DefaultEnvironment>();
             //ink_env::debug_println!("get_votest_works: account={:?}", accounts.bob);
 
             assert!(governor.delegate(accounts.bob, 2).is_ok());
 
-            assert_eq!(governor.get_votes(accounts.bob), 1);
+            assert_eq!(governor.get_votes(accounts.bob),1);
         }
 
         #[ink::test]
         fn has_voted_works() {
             let accounts = accounts();
             change_caller(accounts.alice);
-            let mut governor = Governor::new(Some(String::from("Governor")), 0, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),0,604800,86400);
 
             assert!(governor.delegate(accounts.alice, 1).is_ok());
 
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
             assert!(governor.cast_vote(id, VoteType::For).is_ok());
 
             assert!(governor.has_voted(id, accounts.alice));
@@ -855,7 +907,7 @@ pub mod governor {
 
         #[ink::test]
         fn name_works() {
-            let governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
             assert_eq!(governor.name(), Some(String::from("Governor")));
         }
 
@@ -864,14 +916,12 @@ pub mod governor {
             let accounts = accounts();
             change_caller(accounts.alice);
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
 
             assert!(governor.delegate(accounts.alice, 2).is_ok());
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
-
-            assert_eq!(governor.proposal_deadline(id), 691200)
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
+           
+            assert_eq!(governor.proposal_deadline(id),691200)
         }
 
         #[ink::test]
@@ -879,13 +929,12 @@ pub mod governor {
             let accounts = accounts();
             change_caller(accounts.alice);
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
-            assert!(governor.delegate(accounts.alice, 1).is_ok());
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
+            assert!(governor.delegate(accounts.alice,1).is_ok());
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
+           
+            assert_eq!(governor.proposal_snapshot(id),86400)
 
-            assert_eq!(governor.proposal_snapshot(id), 86400)
         }
 
         #[ink::test]
@@ -894,68 +943,68 @@ pub mod governor {
             let accounts = accounts();
 
             change_caller(accounts.bob);
-            let mut governor = Governor::new(Some(String::from("Governor")), 0, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),0,604800,86400);
             assert!(governor.delegate(accounts.bob, 2).is_ok());
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
             let vote_result = governor.cast_vote(id, VoteType::For);
             assert!(vote_result.is_ok());
 
             let (votes_against, votes_for, votes_abstain) = governor.proposal_votes(id);
-            assert_eq!(votes_for, 1);
-            assert_eq!(votes_abstain, 0);
-            assert_eq!(votes_against, 0);
+            assert_eq!(votes_for,1);
+            assert_eq!(votes_abstain,0);
+            assert_eq!(votes_against,0); 
 
             change_caller(accounts.charlie);
-            assert!(governor.delegate(accounts.charlie, 3).is_ok());
+            assert!(governor.delegate(accounts.charlie,3 ).is_ok());
             let vote_result = governor.cast_vote(id, VoteType::Abstain);
             assert!(vote_result.is_ok());
             let (votes_against, votes_for, votes_abstain) = governor.proposal_votes(id);
-            assert_eq!(votes_for, 1);
-            assert_eq!(votes_abstain, 1);
-            assert_eq!(votes_against, 0);
+            assert_eq!(votes_for,1);
+            assert_eq!(votes_abstain,1);
+            assert_eq!(votes_against,0); 
 
             change_caller(accounts.eve);
-            assert!(governor.delegate(accounts.eve, 4).is_ok());
+            assert!(governor.delegate(accounts.eve,4).is_ok());
             let vote_result = governor.cast_vote(id, VoteType::Against);
             assert!(vote_result.is_ok());
             let (votes_against, votes_for, votes_abstain) = governor.proposal_votes(id);
-            assert_eq!(votes_for, 1);
-            assert_eq!(votes_abstain, 1);
-            assert_eq!(votes_against, 1);
+            assert_eq!(votes_for,1);
+            assert_eq!(votes_abstain,1);
+            assert_eq!(votes_against,1); 
 
             change_caller(accounts.alice);
-            assert!(governor.delegate(accounts.alice, 1).is_ok());
+            assert!(governor.delegate(accounts.alice,1).is_ok());
             let vote_result = governor.cast_vote(id, VoteType::For);
             assert!(vote_result.is_ok());
             let (votes_against, votes_for, votes_abstain) = governor.proposal_votes(id);
-            assert_eq!(votes_for, 2);
-            assert_eq!(votes_abstain, 1);
-            assert_eq!(votes_against, 1);
+            assert_eq!(votes_for,2);
+            assert_eq!(votes_abstain,1);
+            assert_eq!(votes_against,1); 
+
 
             ink_env::debug_println!("proposal_votes_work:: *** end ***");
+
         }
 
         //tested in propose_works
         //#[ink::test]
         //fn state_works() {
         //    let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
-        //
-        //
+        //    
+        //    
         //    assert_eq!(governor.state(OperationId::default()), ProposalState::Pending);
         //}
 
         #[ink::test]
         fn voting_delay_works() {
-            let governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
-            assert_eq!(governor.voting_delay(), 86400);
+            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
+            assert_eq!(governor.voting_delay(),86400);
         }
 
         #[ink::test]
         fn voting_period_works() {
-            let governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
-            assert_eq!(governor.voting_period(), 604800);
+            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
+            assert_eq!(governor.voting_period(),604800);
         }
 
         #[ink::test]
@@ -964,107 +1013,98 @@ pub mod governor {
 
             change_caller(accounts.bob);
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 0, 604800, 86400);
-            assert!(governor.delegate(accounts.bob, 2).is_ok());
+            let mut governor = Governor::new(Some(String::from("Governor")),0,604800,86400);
+            assert!(governor.delegate(accounts.bob,2).is_ok());
             let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            assert_eq!(emitted_events.len(), 2);
+            assert_eq!(emitted_events.len(), 2);    
 
-            let id: OperationId = Default::default();
-            assert_eq!(
-                governor.cast_vote(id, VoteType::For),
-                Err(GovernorError::ProposalDoesNotExist)
-            );
+            let id : OperationId = Default::default();
+            assert_eq!(governor.cast_vote(id, VoteType::For),
+                       Err(GovernorError::ProposalDoesNotExist));
 
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
+
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
             ink_env::debug_println!("proposal_id = {:?}", id);
-
+            
             let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            assert_eq!(emitted_events.len(), 3);
-
+            assert_eq!(emitted_events.len(), 3);    
+            
             let vote_result = governor.cast_vote(id, VoteType::For);
             assert!(vote_result.is_ok());
-            assert_eq!(
-                governor.cast_vote(id, VoteType::For),
-                Err(GovernorError::HasAlreadyVoted)
-            );
-
+            assert_eq!(governor.cast_vote(id, VoteType::For),Err(GovernorError::HasAlreadyVoted));
+            
             let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            assert_eq!(emitted_events.len(), 4);
+            assert_eq!(emitted_events.len(), 4);    
             //TODO: add verification of actual event and its content!
 
             change_caller(accounts.eve);
-            assert_eq!(
-                governor.cast_vote(id, VoteType::For),
-                Err(GovernorError::InsufficientVotingPower)
-            );
+            assert_eq!(governor.cast_vote(id, VoteType::For),Err(GovernorError::InsufficientVotingPower));
+            
         }
 
-        //        #[ink::test]
-        //        fn execute_works() {
-        //            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
-        //            assert!(governor.execute(0).is_ok())
-        //        }
+//        #[ink::test]
+//        fn execute_works() {
+//            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
+//            assert!(governor.execute(0).is_ok())
+//        }
 
         #[ink::test]
         fn propose_works() {
             let accounts = accounts();
             change_caller(accounts.bob);
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
-            assert!(governor.delegate(accounts.bob, 2).is_ok());
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
+            assert!(governor.delegate(accounts.bob,2).is_ok());
             let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            assert_eq!(emitted_events.len(), 2);
+            assert_eq!(emitted_events.len(), 2);    
 
-            let id = governor
-                .propose(Transaction::default(), "test proposal".to_string())
-                .unwrap();
+
+            let id = governor.propose(Transaction::default(), "test proposal".to_string()).unwrap();
             assert_eq!(governor.state(id), ProposalState::Pending);
-
+        
             let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            assert_eq!(emitted_events.len(), 3);
+            assert_eq!(emitted_events.len(), 3);    
             //TODO: add verification of actual event and its content!
 
-            assert_eq!(
-                governor.propose(Transaction::default(), "test proposal".to_string()),
-                Err(GovernorError::ProposalAlreadyExists)
-            );
+            assert_eq!(governor.propose(Transaction::default(), "test proposal".to_string()), 
+                       Err(GovernorError::ProposalAlreadyExists));
+        
         }
 
         #[ink::test]
         fn hash_proposal_works() {
-            let governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
 
-            let id = governor.hash_proposal(Transaction::default(), "test proposal".to_string());
+            let id = governor.hash_proposal(Transaction::default(),"test proposal".to_string());
             ink_env::debug_println!("hash_proposal: id={:?}", id.clone());
-            assert_ne!(id, OperationId::default())
+            assert_ne!(id,OperationId::default())
         }
+
 
         #[ink::test]
         fn delegate_works() {
             let accounts = accounts();
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
 
             change_caller(accounts.bob);
-            assert!(governor.delegate(accounts.bob, 2).is_ok());
+            assert!(governor.delegate(accounts.bob,2).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 1);
-
+            
             advance_block();
-            assert!(governor.delegate(accounts.eve, 4).is_ok());
+            assert!(governor.delegate(accounts.eve,4).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 0);
             assert_eq!(governor.get_votes(accounts.eve), 1);
 
             advance_block();
             change_caller(accounts.eve);
-            assert!(governor.delegate(accounts.eve, 4).is_ok());
+            assert!(governor.delegate(accounts.eve,4).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 0);
             assert_eq!(governor.get_votes(accounts.eve), 2);
 
             advance_block();
             change_caller(accounts.alice);
-            assert!(governor.delegate(accounts.eve, 2).is_ok());
+            assert!(governor.delegate(accounts.eve,2).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 0);
             assert_eq!(governor.get_votes(accounts.eve), 3);
             assert_eq!(governor.get_votes(accounts.alice), 0);
@@ -1074,34 +1114,39 @@ pub mod governor {
         fn get_past_votes_works() {
             let accounts = accounts();
 
-            let mut governor = Governor::new(Some(String::from("Governor")), 86400, 604800, 86400);
+            let mut governor = Governor::new(Some(String::from("Governor")),86400,604800,86400);
 
             change_caller(accounts.bob);
-            assert!(governor.delegate(accounts.bob, 1).is_ok());
+            assert!(governor.delegate(accounts.bob,1).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 1);
             let block_number_1 = ink_env::block_number::<ink_env::DefaultEnvironment>();
 
             advance_block();
-            assert!(governor.delegate(accounts.eve, 2).is_ok());
+            assert!(governor.delegate(accounts.eve,2).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 0);
             assert_eq!(governor.get_votes(accounts.eve), 1);
-
+            
             let block_number_2 = ink_env::block_number::<ink_env::DefaultEnvironment>();
 
             advance_block();
             change_caller(accounts.eve);
-            assert!(governor.delegate(accounts.eve, 2).is_ok());
+            assert!(governor.delegate(accounts.eve,2).is_ok());
             assert_eq!(governor.get_votes(accounts.bob), 0);
             assert_eq!(governor.get_votes(accounts.eve), 2);
+
 
             assert_eq!(governor.get_past_votes(accounts.bob, block_number_1), 1);
             assert_eq!(governor.get_past_votes(accounts.eve, block_number_2), 1);
         }
 
+        
+ 
         #[allow(dead_code)]
         #[cfg(feature = "std")]
         fn advance_block() {
             let _ = ink_env::test::advance_block::<ink_env::DefaultEnvironment>();
         }
+
     }
+
 }

@@ -4,6 +4,16 @@ azero.debate – Zero-Knowledge negative reputation (Hackathon)
 
 ## Getting Started
 
+# AzeroCurations 
+
+azero.curations – Zero-Knowledge negative reputation (Hackathon)
+**ZK Decentralised posts for DAOs
+
+## Getting Started
+
+
+
+
 ## Development
 
 ## Deployment
@@ -11,6 +21,12 @@ azero.debate – Zero-Knowledge negative reputation (Hackathon)
 ## Smart contracts
 
 `cargo +nightly contract build` :
+
+
+
+## Smart contracts 
+
+``` cargo +nightly contract build ``` :
 Compiles the contract into optimized WebAssembly bytecode, generates metadata for it, and bundles both together in a <name>.contract file, which you can use for deploying the contract on-chain.
 
 ## Devpost Description
@@ -26,6 +42,8 @@ Compiles the contract into optimized WebAssembly bytecode, generates metadata fo
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+  
+  
 
 ## Available Scripts
 
