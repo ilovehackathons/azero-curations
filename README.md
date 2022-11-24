@@ -27,24 +27,19 @@ Architecture :
 5/ Blender contract : 5ExdeNmh3c7kXpx9uE4M9T63z19KZNAPSyGMfE5zPXeBUryj
 
 
-``` cargo +nightly contract build ``` :
+```   cargo +nightly contract build --optimization-passes=0 --release ```  :
 Compiles the contract into optimized WebAssembly bytecode, generates metadata for it, and bundles both together in a <name>.contract file, which you can use for deploying the contract on-chain.
   
  
-## Devpost Description
-
  
 ### Inspiration
 
   We have being inspired by Vitalik article ZK negative reputation : https://vitalik.ca/general/2022/06/15/using_snarks.html
   
-### What it does
-  
-  
+    
 ### How we built it
   
   We have used rust for smart contracts. 
-  
   
   
   
