@@ -6,7 +6,7 @@ use ink_lang as ink;
 use ink_prelude::vec::Vec;
 
 
-use roosterdao::traits::governor::{
+use azerodebate::traits::governor::{
     NftId,
     CollectionId,
     ResourceId,
@@ -130,7 +130,7 @@ pub mod governor {
         contracts::timelock_controller::*,
     };
     
-    use roosterdao::traits::governor::*;
+    use azerodebate::traits::governor::*;
 
 
     #[ink(event)]
