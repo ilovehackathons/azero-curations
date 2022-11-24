@@ -1,0 +1,16 @@
+<svg width="70" height="70" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="35" cy="35" r="35" fill="#5CC9AC"/>
+<circle cx="35" cy="35" r="31.5" fill="#172029"/>
+<circle cx="35" cy="35" r="35" fill="#5CC9AC"/>
+<circle cx="35" cy="35" r="31.5" fill="#172029"/>
+<circle cx="35" cy="35" r="26.25" fill="#5CC9AC"/>
+<circle cx="35" cy="35" r="22.75" fill="#172029"/>
+<path d="M31.4971 18.8648L35.5874 18.8648L22.9075 46.5222L17.9992 46.5222L31.4971 18.8648Z" fill="white"/>
+<path d="M32.4749 19.1852H38.5386L38.032 22.1667H35.5067H32.9254L32.4749 19.1852Z" fill="white"/>
+<path d="M35.1784 18.8641L39.1231 18.8641L51.5395 46.5222L46.6312 46.5222L35.1784 18.8641Z" fill="white"/>
+<path d="M20.4487 29.3222H28.5337V33.1982H20.4487V29.3222Z" fill="white"/>
+<path d="M41.5276 29.3222H48.7463V33.1982H41.5276V29.3222Z" fill="white"/>
+<rect x="31.15" y="35" width="8.4" height="1.75" fill="white"/>
+<rect x="31.15" y="38.15" width="8.4" height="1.75" fill="white"/>
+<rect x="31.15" y="41.3" width="8.4" height="1.75" fill="white"/>
+</svg>
