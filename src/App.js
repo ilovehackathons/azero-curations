@@ -9,16 +9,10 @@ import DAO3 from "./DAO3.svg";
 import DAO4 from "./DAO4.svg";
 
 import separator from "./separator.svg";
+import lowerSeparator from "./lowerSeparator.svg";
 import metamafia from "./metamafia.svg";
-
-import upvote from "./upvote.svg";
-import downvote from "./downvote.svg";
-
 import upArrow from "./upArrow.svg";
 import downArrow from "./downArrow.svg";
-
-// import { ArrowSmallUpIcon } from "@heroicons/react";
-// import { ArrowSmallDownIcon } from "@heroicons/react";
 
 function App() {
   async function connect() {
@@ -71,34 +65,10 @@ function App() {
           My Curations
         </h1>
         <div className="flex justify-evenly py-8">
-          <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
-            <img src={DAO1} alt="" />
-            <div className="font-semibold">AZERO TEST DAO</div>
-            <button className="bg-red-400 p-1 rounded-xl px-4 text-xs font-bold">
-              Current
-            </button>
-          </div>
-          <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
-            <img src={DAO2} alt="" />
-            <div className="font-semibold">Olympus DAO</div>
-            <button className="bg-teal-400 p-1 rounded-xl px-4 text-xs font-bold">
-              Join Debate
-            </button>
-          </div>
-          <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
-            <img src={DAO3} alt="" />
-            <div className="font-semibold">FRAX Finance</div>
-            <button className="bg-teal-400 p-1 rounded-xl px-4 text-xs font-bold">
-              Join Debate
-            </button>
-          </div>
-          <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
-            <img src={DAO4} alt="" />
-            <div className="font-semibold">Convex Finance</div>
-            <button className="bg-teal-400 p-1 rounded-xl px-4 text-xs font-bold">
-              Join Debate
-            </button>
-          </div>
+          <DAOCard imgSrc={DAO1} label="AZERO TEST DAO" current />
+          <DAOCard imgSrc={DAO2} label="Olympus DAO" />
+          <DAOCard imgSrc={DAO3} label="FRAX Finance" />
+          <DAOCard imgSrc={DAO4} label="Convex Finance" />
         </div>
         <img src={separator} alt="" className="m-auto mt-4" />
         <div className="flex justify-center">
@@ -107,67 +77,22 @@ function App() {
           </button>
         </div>
         <div className="mx-16 gap-4 my-8 text-black">
-          <div className="bg-gray-400 rounded-xl flex p-4 flex-col gap-4">
-            <div className="flex gap-4 items-center w-full">
-              <div className="bg-gray-200 flex items-center gap-1 p-2 rounded-xl">
-                <img src={metamafia} alt="" className="h-8" />
-                <div>MetaMafia.azero</div>
-              </div>
-              <div className="bg-gray-200 flex items-center gap-1 p-2 rounded-xl">
-                <img src={DAO1} alt="" className="h-8" />
-                <div className="font-semibold">AZERO TEST DAO</div>
-              </div>
-              <div className="font-bold">Tags:</div>
-              <div className="bg-orange-400 p-2 px-3 rounded-3xl font-bold">
-                Governance
-              </div>
-              <div className="bg-red-500 p-2 px-3 rounded-3xl font-bold">
-                DeFi
-              </div>
-              <div className="bg-blue-400 p-2 px-3 rounded-3xl font-bold">
-                NFTs
-              </div>
-              <div className="grow text-right">2 hours ago</div>
-            </div>
-            <div className="flex gap-6 items-center">
-              <div className="flex flex-col bg-gray-200 p-6 rounded-xl gap-4">
-                <div className="flex flex-col text-green-500">
-                  <button>
-                    <img src={upArrow} alt="" />
-                  </button>
-                  67
-                </div>
-                <div className="flex flex-col text-red-500">
-                  21
-                  <button>
-                    <img src={downArrow} alt="" />
-                  </button>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-4">
-                Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has been the industry's standard dummy
-                text ever since the 1500s, when an unknown printer took a galley
-                of type and scrambled it to make a type specimen book. It has
-                survived not only five centuries, but also the leap into
-                electronic typesetting, remaining essentially unchanged. It was
-                popularised in the 1960s with the release of Letraset sheets
-                containing Lorem Ipsum passages, and more recently with desktop
-                publishing software like Aldus PageMaker including versions of
-                Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing
-                and typesetting industry. Lorem Ipsum has been the industry's
-                standard dummy text ever since the 1500s, when an unknown
-                printer took a galley of type and scrambled it to make a type
-                specimen book. It has survived not only five centuries, but also
-                the leap into electronic typesetting, remaining essentially
-                unchanged. It was popularised in the 1960s with the release of
-                Letraset sheets containing Lorem Ipsum passages, and more
-                recently with desktop publishing software like Aldus PageMaker
-                including versions of Lorem Ipsum.
-              </div>
-            </div>
-          </div>
-          <img src={separator} alt="" className="m-auto mt-16" />
+          <PostCard
+            authorImg={metamafia}
+            authorName="MetaMafia.azero"
+            daoImg={DAO1}
+            daoName="AZERO TEST DAO"
+            tags={[
+              { color: "orange", label: "Governance" },
+              { color: "red", label: "DeFi" },
+              { color: "blue", label: "NFTs" },
+            ]}
+            time={Date.now() - 60 * 60 * 1.5}
+            upvoteCount={67}
+            downVoteCount={21}
+            text="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+          />
+          <img src={lowerSeparator} alt="" className="m-auto mt-16" />
         </div>
       </div>
     </div>
@@ -175,3 +100,75 @@ function App() {
 }
 
 export default App;
+
+function DAOCard({ imgSrc, label, current }) {
+  return (
+    <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
+      <img src={imgSrc} alt="" />
+      <div className="font-semibold">{label}</div>
+      <button
+        className={`bg-${
+          current ? "red" : "teal"
+        }-400 p-1 rounded-xl px-4 text-xs font-bold`}
+      >
+        {current ? "Current" : "Join Debate"}
+      </button>
+    </div>
+  );
+}
+
+function PostCard({
+  authorImg,
+  authorName,
+  daoImg,
+  daoName,
+  tags,
+  time,
+  upvoteCount,
+  downVoteCount,
+  text,
+}) {
+  return (
+    <div className="bg-gray-400 rounded-xl flex p-4 flex-col gap-4">
+      <div className="flex gap-4 items-center w-full">
+        <div className="bg-gray-200 flex items-center gap-1 p-2 rounded-xl">
+          <img src={authorImg} alt="" className="h-8" />
+          <div>{authorName}</div>
+        </div>
+        <div className="bg-gray-200 flex items-center gap-1 p-2 rounded-xl">
+          <img src={daoImg} alt="" className="h-8" />
+          <div className="font-semibold">{daoName}</div>
+        </div>
+        <div className="font-bold">Tags:</div>
+        {tags.map((tag) => (
+          <div
+            key={tag.label}
+            className={`bg-${tag.color}-400 p-2 px-3 rounded-3xl font-bold`}
+          >
+            {tag.label}
+          </div>
+        ))}
+        <div className="grow text-right">
+          {~~(((Date.now() - time) / 60 / 60) * 2) / 2} hours ago
+        </div>
+      </div>
+      <div className="flex gap-6 items-center">
+        <div className="flex flex-col bg-gray-200 p-6 rounded-xl gap-4">
+          <div className="flex flex-col text-green-500">
+            <button>
+              <img src={upArrow} alt="" />
+            </button>
+            {upvoteCount}
+          </div>
+          <div className="flex flex-col text-red-500">
+            {downVoteCount}
+            <button>
+              <img src={downArrow} alt="" />
+            </button>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4">{text}</div>
+      </div>
+    </div>
+  );
+}
