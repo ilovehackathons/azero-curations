@@ -1,23 +1,39 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
+import { web3Enable } from "@polkadot/extension-dapp";
+import { useState } from "react";
 
 function App() {
+  async function connect() {
+    const allInjected = await web3Enable("Azero Debate");
+    setWalletState(allInjected.length ? "connected" : "errored");
+  }
+  const [walletState, setWalletState] = useState("awaiting connection");
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className="p-4 flex items-center justify-between">
+      <img src={logo} alt="" />
+      {walletState === "awaiting connection" ? (
+        <button
+          className="mt-2 mr-2 rounded-3xl px-6 py-2 text-sm font-medium bg-teal-400 text-white"
+          onClick={connect}
         >
-          Learn React
-        </a>
-      </header>
+          Connect Wallet
+        </button>
+      ) : walletState === "connected" ? (
+        <button
+          className="mt-2 mr-2 rounded-3xl px-6 py-2 text-sm font-medium bg-teal-400 text-white"
+          onClick={connect}
+        >
+          Wallet Connected
+        </button>
+      ) : (
+        <button
+          className="mt-2 mr-2 rounded-3xl px-6 py-2 text-sm font-medium bg-red-400 text-white"
+          onClick={connect}
+        >
+          Wallet Error
+        </button>
+      )}
     </div>
   );
 }
