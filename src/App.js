@@ -155,8 +155,6 @@ function App() {
   );
 }
 
-export default App;
-
 function DAOCard({ imgSrc, label, current }) {
   return (
     <div className="bg-gray-300 text-black flex items-center gap-2 rounded-xl p-2">
@@ -228,3 +226,5 @@ function PostCard({
     </div>
   );
 }
+
+export default App;
