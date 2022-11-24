@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 # AzeroDebate 
@@ -46,3 +47,5 @@ Compiles the contract into optimized WebAssembly bytecode, generates metadata fo
   
 
 
+=======
+>>>>>>> 18b431a (feat: contracts)
