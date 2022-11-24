@@ -20,11 +20,11 @@ We are using the blender to allow users to anonymise their votes.
 
 Architecture : 
 
-1/ register a new token in the contract (copy TokenID). 
-2/ Deposit token in the contract (use CLI  - > generates Zk-Proofs) 
-3/ Mapping : TokenID is that corresponds to a given token. 
-4/ voting/DAO contract should accept transactions coming from the blender (voting = withdrawal from the blender).
-5/ Blender contract : 5ExdeNmh3c7kXpx9uE4M9T63z19KZNAPSyGMfE5zPXeBUryj
+- 1/ register a new token in the contract (copy TokenID). 
+- 2/ Deposit token in the contract (use CLI  - > generates Zk-Proofs) 
+- 3/ Mapping : TokenID is that corresponds to a given token. 
+- 4/ voting/DAO contract should accept transactions coming from the blender (voting = withdrawal from the blender).
+- 5/ Blender contract : 5ExdeNmh3c7kXpx9uE4M9T63z19KZNAPSyGMfE5zPXeBUryj
 
 
 ```   cargo +nightly contract build --optimization-passes=0 --release ```  :
